@@ -1,0 +1,16 @@
+model:
+  type: mixnet_m
+dataset: cifar100
+cutout: 16
+batch: 512
+epoch: 500
+lr: 0.1
+lr_schedule:
+  type: 'cosine'
+  warmup:
+    multiplier: 1.01
+    epoch: 10
+optimizer:
+  type: sgd
+  nesterov: True
+  decay: 0.0001
