@@ -2,7 +2,7 @@ model:
   type: mixnet_m
 dataset: cifar100
 cutout: 16
-batch: 512
+batch: 768
 epoch: 500
 lr: 0.1
 lr_schedule:

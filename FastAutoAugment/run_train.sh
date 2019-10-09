@@ -3,7 +3,7 @@ gpu_num=8
 task_num=1
 
 root_dir=/mnt/lustre/zhangyao/micronet
-project_dir=${root_dir}/mixnet-m
+project_dir=${root_dir}/mini-mixnet-m
 dataset_dir=${root_dir}/dataset
 
 now=$(date +"%Y%m%d_%H%M%S")
@@ -19,4 +19,4 @@ srun    --partition=${partition} \
         -c confs/mixnet_m.yaml \
         --dataset cifar100 \
 	--save ${project_dir}/mixnet_m_checkpoint.pth.tar \
-        --tag mixnet_xl_manul_aug_0.0.3
+        --tag mini_0.0.4
