@@ -8,14 +8,8 @@ from torch.utils.data import SubsetRandomSampler, Sampler, Subset
 from torchvision.transforms import transforms
 from sklearn.model_selection import StratifiedShuffleSplit
 from theconf import Config as C
+import numpy as np
 
-from archive import arsaug_policy, autoaug_policy, autoaug_paper_cifar10, random_search2048, \
-    fa_reduced_imagenet, fa_reduced_cifar10
-# fa_wresnet40x2, fa_wresnet28x10, fa_pyramid_e300, fa_pyramid_c100, fa_wresnet40x2_c100, \
-# fa_resnet50_imagenet_minusloss, fa_wresnet40x2_cifar100, fa_wresnet40x2_cifar100_r5, fa_wresnet40x2_cifar10, \
-# fa_wresnet28x10_cifar100, fa_wresnet28x10_cifar10, fa_pyramid_cifar10, fa_pyramid_cifar100, \
-# fa_resnet50_rimagenet, fa_shake26_2x96d_cifar100, fa_shake26_2x96d_cifar10, fa_reduced_cifar10_progressive
-from augmentations import *
 from common import get_logger
 from samplers.distributed_sampler import DistributedStratifiedSampler
 from samplers.stratified_sampler import StratifiedSampler
@@ -62,6 +56,7 @@ def get_dataloaders(dataset, batch, dataroot, split=0.0, split_idx=0, horovod=Fa
     else:
         valid_sampler = SubsetSampler([])
 
+        print("horovod: {}".format(horovod))
         if horovod:
             import horovod.torch as hvd
             train_sampler = DistributedStratifiedSampler(total_trainset.train_labels, num_replicas=hvd.size(), rank=hvd.rank())

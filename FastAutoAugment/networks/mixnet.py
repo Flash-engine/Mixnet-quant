@@ -208,17 +208,12 @@ class MixNet(nn.Module):
                 (180, 180, [3, 5, 7],    [1],    [1, 1], 1, 6, 'Swish', 0.5),
                 (180, 180, [3, 5, 7],    [1],    [1, 1], 1, 6, 'Swish', 0.5)]
 
-    def __init__(self, net_type='mixnet_m', input_size=32, num_classes=100, stem_channels=24, feature_size=512, depth_multiplier=1.0):
+    def __init__(self, net_type='mixnet_m', input_size=32, num_classes=100, stem_channels=24, feature_size=512, depth_multiplier=0.83):
         super(MixNet, self).__init__()
 
         if net_type == 'mixnet_m':
             config = self.mixnet_m
             stem_channels = 24
-            dropout_rate = 0.25
-        elif net_type == 'mixnet_l':
-            config = self.mixnet_m
-            stem_channels = 24
-            depth_multiplier *= 1.3
             dropout_rate = 0.25
         else:
             raise TypeError('Unsupported MixNet type')
