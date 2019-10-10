@@ -1,11 +1,9 @@
 import torch
-#from pretrainedmodels import models
 
 from torch import nn
 from torch.nn import DataParallel
 import torch.backends.cudnn as cudnn
 
-#from networks.mixnet import mixnet_m
 from networks.mixnet_dsq import mixnet_m
 
 
@@ -22,8 +20,6 @@ def get_model(conf, num_class=10, data_parallel=True):
         model = model.cuda()
         model = DataParallel(model)
     else:
-        import horovod.torch as hvd
-        device = torch.device('cuda', hvd.local_rank())
         model = model.to(device)
     cudnn.benchmark = True
     return model
