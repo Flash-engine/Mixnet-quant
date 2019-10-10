@@ -17,7 +17,7 @@ from samplers.stratified_sampler import StratifiedSampler
 logger = get_logger('MicroNet')
 logger.setLevel(logging.INFO)
 
-def get_dataloaders(dataset, batch, dataroot, split=0.0, split_idx=0, horovod=False):
+def get_dataloaders(dataset, batch, dataroot, split=0.0, split_idx=0):
     if 'cifar' in dataset:
         transform_train = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
@@ -50,18 +50,9 @@ def get_dataloaders(dataset, batch, dataroot, split=0.0, split_idx=0, horovod=Fa
         train_sampler = SubsetRandomSampler(train_idx)
         valid_sampler = SubsetSampler(valid_idx)
 
-        if horovod:
-            import horovod.torch as hvd
-            train_sampler = torch.utils.data.distributed.DistributedSampler(train_sampler, num_replicas=hvd.size(), rank=hvd.rank())
     else:
         valid_sampler = SubsetSampler([])
-
-        print("horovod: {}".format(horovod))
-        if horovod:
-            import horovod.torch as hvd
-            train_sampler = DistributedStratifiedSampler(total_trainset.train_labels, num_replicas=hvd.size(), rank=hvd.rank())
-        else:
-            train_sampler = StratifiedSampler(total_trainset.train_labels)
+        train_sampler = StratifiedSampler(total_trainset.train_labels)
 
     trainloader = torch.utils.data.DataLoader(
         total_trainset, batch_size=batch, shuffle=True if train_sampler is None else False, num_workers=32, pin_memory=True,

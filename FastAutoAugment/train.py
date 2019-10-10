@@ -97,24 +97,19 @@ def run_epoch(model, loader, loss_fn, optimizer, desc_default='', epoch=0, write
         if is_train:
             data, targets_a, targets_b, lam = mixup_data(data, label, use_cuda=True)
             data, targets_a, targets_b = map(Variable, (data, targets_a, targets_b))
-
             preds = model(data)
-
             loss = mixup_criterion(loss_fn, preds, targets_a, targets_b, lam)
         else:
             preds = model(data)
             loss = loss_fn(preds, label)
-
         if optimizer:
             optimizer.zero_grad()
-
         if optimizer:
             loss.backward()
             if getattr(optimizer, "synchronize", None):
                 optimizer.synchronize()
             if C.get()['optimizer'].get('clip', 5) > 0:
                 nn.utils.clip_grad_norm_(model.parameters(), C.get()['optimizer'].get('clip', 5))
-
             optimizer.step()
 
         top1, top5 = accuracy(preds, label, (1, 5))
@@ -131,9 +126,6 @@ def run_epoch(model, loader, loss_fn, optimizer, desc_default='', epoch=0, write
                 postfix['lr'] = optimizer.param_groups[0]['lr']
             loader.set_postfix(postfix)
 
-        # if scheduler is not None:
-        #     scheduler.step(epoch - 1 + float(steps) / total_steps)
-
         del preds, loss, top1, top5, data, label
 
     if tqdm_disable:
@@ -149,21 +141,17 @@ def run_epoch(model, loader, loss_fn, optimizer, desc_default='', epoch=0, write
 
 
 def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metric='last', \
-        save_path=None,pretrained=None, only_eval=False, horovod=False):
-    if horovod:
-        import horovod.torch as hvd
-        hvd.init()
-        device = torch.device('cuda', hvd.local_rank())
-        torch.cuda.set_device(device)
+        save_path=None,pretrained=None, only_eval=False):
 
     if not reporter:
         reporter = lambda **kwargs: 0
 
     max_epoch = C.get()['epoch']
-    trainsampler, trainloader, validloader, testloader_ = get_dataloaders(C.get()['dataset'], C.get()['batch'], dataroot, test_ratio, split_idx=cv_fold, horovod=horovod)
+    trainsampler, trainloader, validloader, testloader_ = get_dataloaders(C.get()['dataset'], C.get()['batch'],\
+            dataroot, test_ratio, split_idx = cv_fold)
 
     # create a model & an optimizer
-    model = get_model(C.get()['model'], num_class(C.get()['dataset']), data_parallel=(not horovod))
+    model = get_model(C.get()['model'], num_class(C.get()['dataset']),data_parallel=True)
 
     # criterion = nn.CrossEntropyLoss()
     criterion = LabelSmoothSoftmaxCE()
@@ -178,16 +166,7 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
     else:
         raise ValueError('invalid optimizer type=%s' % C.get()['optimizer']['type'])
 
-    is_master = True
-    if horovod:
-        optimizer = hvd.DistributedOptimizer(optimizer, named_parameters=model.named_parameters())
-        optimizer._requires_update = set()  # issue : https://github.com/horovod/horovod/issues/1099
-        hvd.broadcast_parameters(model.state_dict(), root_rank=0)
-        hvd.broadcast_optimizer_state(optimizer, root_rank=0)
-        if hvd.rank() != 0:
-            is_master = False
-    logger.debug('is_master=%s' % is_master)
-
+   #set schedulers
     lr_scheduler_type = C.get()['lr_schedule'].get('type', 'cosine')
     if lr_scheduler_type == 'cosine':
         logger.debug('cosine learn decay.')
@@ -195,10 +174,6 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
         if C.get()['lr_schedule'].get('warmup', None):
             t_max -= C.get()['lr_schedule']['warmup']['epoch']
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=t_max, eta_min=0.)
-    elif lr_scheduler_type == 'resnet':
-        scheduler = adjust_learning_rate_resnet(optimizer)
-    elif lr_scheduler_type == 'pyramid':
-        scheduler = adjust_learning_rate_pyramid(optimizer, C.get()['epoch'])
     elif lr_scheduler_type == 'mixnet_l':
         scheduler = adjust_learning_rate_mixnet(optimizer)
     else:
@@ -212,26 +187,23 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
             after_scheduler=scheduler
         )
 
-    if not tag.strip() or not is_master:
-        from metrics import SummaryWriterDummy as SummaryWriter
-        logger.warning('tag not provided, no tensorboard log.')
-    else:
-        from tensorboardX import SummaryWriter
+    from tensorboardX import SummaryWriter
     writers = [SummaryWriter(log_dir='./logs/%s/%s' % (tag, x)) for x in ['train', 'valid', 'test']]
 
     result = OrderedDict()
     epoch_start = 1
+
+    ## load model for training or evaluation
     if save_path and os.path.exists(save_path):
         data = torch.load(save_path)
         if 'model' in data:
             # TODO : patch, horovod trained checkpoint
             new_state_dict = {}
             for k, v in data['model'].items():
-                if not horovod and 'module.' not in k:
+                if  'module.' not in k:
                     new_state_dict['module.' + k] = v
                 else:
                     new_state_dict[k] = v
-
             model.load_state_dict(new_state_dict)
             optimizer.load_state_dict(data['optimizer'])
             logger.info('ckpt epoch@%d' % data['epoch'])
@@ -250,7 +222,7 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
         if 'model' in ckt:
             new_state_dict = {}
             for k, v in ckt['model'].items():
-                if not horovod and 'module.' not in k:
+                if 'module.' not in k:
                     new_state_dict['module.' + k] = v
                 else:
                     new_state_dict[k] = v
@@ -260,15 +232,19 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
             model_dict.update(ckt)
             model.load_state_dict(model_dict)
 
-
+    ##Evaluate the model
     if only_eval:
         print('Eval model')
         logger.info('evaluation only+')
         model.eval()
         rs = dict()
-        rs['train'] = run_epoch(model, trainloader, criterion, None, desc_default='train', epoch=0, writer=writers[0], is_train=True)
+        rs['train'] = run_epoch(model, trainloader, criterion, None, desc_default='train', \
+                epoch=0, writer=writers[0], is_train=True)
+
         rs['valid'] = run_epoch(model, validloader, criterion, None, desc_default='valid', epoch=0, writer=writers[1])
+
         rs['test'] = run_epoch(model, testloader_, criterion, None, desc_default='*test', epoch=0, writer=writers[2])
+
         for key, setname in itertools.product(['loss', 'top1', 'top5'], ['train', 'valid', 'test']):
             result['%s_%s' % (key, setname)] = rs[setname][key]
         result['epoch'] = 0
@@ -279,23 +255,22 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
     best_accuracy = 0.0
     for epoch in range(epoch_start, max_epoch + 1):
         scheduler.step()
-
-        if horovod:
-            trainsampler.set_epoch(epoch)
-
         model.train()
         rs = dict()
-        rs['train'] = run_epoch(model, trainloader, criterion, optimizer, desc_default='train', epoch=epoch, writer=writers[0], verbose=is_master, scheduler=scheduler, is_train=True)
+        rs['train'] = run_epoch(model, trainloader, criterion, optimizer, desc_default='train', \
+                epoch=epoch, writer=writers[0], verbose=is_master, scheduler=scheduler, is_train=True)
         model.eval()
 
         if math.isnan(rs['train']['loss']):
             raise Exception('train loss is NaN.')
 
         if epoch % (10 if 'cifar' in C.get()['dataset'] else 30) == 0 or epoch == max_epoch:
-            rs['valid'] = run_epoch(model, validloader, criterion, None, desc_default='valid', epoch=epoch, writer=writers[1], verbose=is_master)
-            rs['test'] = run_epoch(model, testloader_, criterion, None, desc_default='*test', epoch=epoch, writer=writers[2], verbose=is_master)
+            rs['valid'] = run_epoch(model, validloader, criterion, None, desc_default='valid', \
+                    epoch=epoch, writer=writers[1], verbose=is_master)
+            rs['test'] = run_epoch(model, testloader_, criterion, None, desc_default='*test', \
+                    epoch=epoch, writer=writers[2], verbose=is_master)
 
-            if metric == 'last' or rs[metric]['loss'] < best_valid_loss:    # TODO
+            if metric == 'last' or rs[metric]['loss'] < best_valid_loss: 
                 if metric != 'last':
                     best_valid_loss = rs[metric]['loss']
                 for key, setname in itertools.product(['loss', 'top1', 'top5'], ['train', 'valid', 'test']):
@@ -334,24 +309,22 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
 if __name__ == '__main__':
     parser = ConfigArgumentParser(conflict_handler='resolve')
     parser.add_argument('--tag', type=str, default='')
-    parser.add_argument('--dataroot', type=str, default='/data/private/pretrainedmodels', help='torchvision data folder')
+    parser.add_argument('--dataroot', type=str, default='', help='torchvision data folder')
     parser.add_argument('--save', type=str, default='')
     parser.add_argument('--pretrained', type=str, default='')#loading pretrained model path
     parser.add_argument('--cv_ratio', type=float, default=0.0)
     parser.add_argument('--cv', type=int, default=0)
     parser.add_argument('--decay', type=float, default=-1)
-    parser.add_argument('--horovod', action='store_true')
     parser.add_argument('--only_eval', action='store_true')
     args = parser.parse_args()
 
-    assert not (args.horovod and args.only_eval), 'can not use horovod when evaluation mode is enabled.'
     if args.decay > 0:
         logger.info('decay reset=%.8f' % args.decay)
         C.get()['optimizer']['decay'] = args.decay
     if args.save:
         logger.info('checkpoint will be saved at %s', args.save)
 
-    ##for reproducible
+    ## for reproductivity
     import random
     random.seed(1)
     torch.manual_seed(1)
@@ -362,7 +335,7 @@ if __name__ == '__main__':
     result = train_and_eval(args.tag, args.dataroot, \
             test_ratio=args.cv_ratio, cv_fold=args.cv, \
             save_path=args.save, pretrained=args.pretrained,\
-            only_eval=args.only_eval, horovod=args.horovod)
+            only_eval=args.only_eval)
 
     elapsed = time.time() - t
 
