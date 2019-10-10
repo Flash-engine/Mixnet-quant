@@ -2,9 +2,9 @@ model:
   type: mixnet_m_quant
 dataset: cifar100
 cutout: 16
-batch: 192
+batch: 128
 epoch: 500
-lr: 0.001
+lr: 0.0001
 lr_schedule:
   type: 'cosine'
   warmup:
