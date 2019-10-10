@@ -1,3 +1,6 @@
-/checkpoints
+checkpoints/*
 events*
 *pyc
+__pycache__/*
+DSQ_quant
+*.tar
