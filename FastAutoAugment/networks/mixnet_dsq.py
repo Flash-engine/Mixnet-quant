@@ -298,10 +298,10 @@ class MixNet(nn.Module):
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
 
-def mixnet_m():
+def dsq_mixnet_m():
     model = MixNet("mixnet_m")
     return model
 
-def mixnet_l():
+def dsq_mixnet_l():
     model = MixNet("mixnet_l")
     return model
