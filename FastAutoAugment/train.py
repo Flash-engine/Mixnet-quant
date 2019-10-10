@@ -16,7 +16,7 @@ from theconf import Config as C, ConfigArgumentParser
 
 from common import get_logger
 from data import get_dataloaders
-from lr_scheduler import adjust_learning_rate_pyramid, adjust_learning_rate_resnet, adjust_learning_rate_mixnet
+from lr_scheduler import  adjust_learning_rate_mixnet
 from metrics import accuracy, Accumulator
 from networks import get_model, num_class
 
@@ -59,7 +59,7 @@ class LabelSmoothSoftmaxCE(nn.Module):
             loss = -torch.sum(logs*label, dim=1)
         return loss
 
-# mixup
+# mixup data and criterion
 def mixup_data(x, y, alpha=1.0, use_cuda=True):
     '''Returns mixed inputs, pairs of targets, and lambda'''
     if alpha > 0:
@@ -80,6 +80,7 @@ def mixup_data(x, y, alpha=1.0, use_cuda=True):
 def mixup_criterion(criterion, pred, y_a, y_b, lam):
     return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
 
+# run a epoch
 def run_epoch(model, loader, loss_fn, optimizer, desc_default='', epoch=0, writer=None, verbose=1, scheduler=None, is_train=False):
     tqdm_disable = bool(os.environ.get('TASK_NAME', ''))
     if verbose:
