@@ -198,7 +198,6 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
     if save_path and os.path.exists(save_path):
         data = torch.load(save_path)
         if 'model' in data:
-            # TODO : patch, horovod trained checkpoint
             new_state_dict = {}
             for k, v in data['model'].items():
                 if  'module.' not in k:
