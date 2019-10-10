@@ -5,6 +5,7 @@ import os
 from collections import OrderedDict
 
 import torch
+import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 from torch import nn, optim
 
@@ -147,7 +148,8 @@ def run_epoch(model, loader, loss_fn, optimizer, desc_default='', epoch=0, write
     return metrics
 
 
-def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metric='last', save_path=None, only_eval=False, horovod=False):
+def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metric='last', \
+        save_path=None,pretrained=None, only_eval=False, horovod=False):
     if horovod:
         import horovod.torch as hvd
         hvd.init()
@@ -241,6 +243,23 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
         else:
             model.load_state_dict(data)
         del data
+    elif pretrained:
+        assert os.path.exists(pretrained)
+        ckt=torch.load(pretrained)
+        model_dict = model.state_dict()
+        if 'model' in ckt:
+            new_state_dict = {}
+            for k, v in ckt['model'].items():
+                if not horovod and 'module.' not in k:
+                    new_state_dict['module.' + k] = v
+                else:
+                    new_state_dict[k] = v
+            model_dict.update(new_state_dict)
+            model.load_state_dict(model_dict)
+        else:
+            model_dict.update(ckt)
+            model.load_state_dict(model_dict)
+
 
     if only_eval:
         logger.info('evaluation only+')
@@ -316,6 +335,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag', type=str, default='')
     parser.add_argument('--dataroot', type=str, default='/data/private/pretrainedmodels', help='torchvision data folder')
     parser.add_argument('--save', type=str, default='')
+    parser.add_argument('--pretrained', type=str, default='')#loading pretrained model path
     parser.add_argument('--cv-ratio', type=float, default=0.0)
     parser.add_argument('--cv', type=int, default=0)
     parser.add_argument('--decay', type=float, default=-1)
@@ -332,9 +352,16 @@ if __name__ == '__main__':
     if args.save:
         logger.info('checkpoint will be saved at %s', args.save)
 
+    ##for reproducible
+    import random
+    random.seed(1)
+    torch.manual_seed(1)
+    cudnn.deterministic = True
+
     import time
     t = time.time()
-    result = train_and_eval(args.tag, args.dataroot, test_ratio=args.cv_ratio, cv_fold=args.cv, save_path=args.save, horovod=args.horovod)
+    result = train_and_eval(args.tag, args.dataroot, test_ratio=args.cv_ratio, cv_fold=args.cv, \
+            save_path=args.save,pretrained=args.pretrained, horovod=args.horovod)
     elapsed = time.time() - t
 
     logger.info('training done.')
