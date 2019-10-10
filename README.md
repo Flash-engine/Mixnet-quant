@@ -1,114 +1,186 @@
-# Fast AutoAugment
-
-Official [Fast AutoAugment](https://arxiv.org/abs/1905.00397) implementation in PyTorch.
-
-- Fast AutoAugment learns augmentation policies using a more efficient search strategy based on density matching.
-- Fast AutoAugment speeds up the search time by orders of magnitude while maintaining the comparable performances.
-
-We do not open augmentation search codes at this moment, but it will be publicly open with our follow-up studies.
-
-## Results
-
-### CIFAR-10 / 100
-
-Search : **3.5 GPU Hours (1428x faster than AutoAugment)**, WResNet-40x2 on Reduced CIFAR-10
-
-| Model(CIFAR-10)         | Baseline   | Cutout     | AutoAugment | Fast AutoAugment<br/>(transfer/direct) |
-|-------------------------|------------|------------|-------------|------------------|
-| Wide-ResNet-40-2        | 5.3        | 4.1        | 3.7         | 3.6 / 3.7        |
-| Wide-ResNet-28-10       | 3.9        | 3.1        | 2.6         | 2.7 / 2.7        |
-| Shake-Shake(26 2x32d)   | 3.6        | 3.0        | 2.5         | 2.7 / 2.5        |
-| Shake-Shake(26 2x96d)   | 2.9        | 2.6        | 2.0         | 2.0 / 2.0        |
-| Shake-Shake(26 2x112d)  | 2.8        | 2.6        | 1.9         | 2.0 / 1.9        |
-| PyramidNet+ShakeDrop    | 2.7        | 2.3        | 1.5         | 1.8 / 1.7        |
-
-| Model(CIFAR-100)      | Baseline   | Cutout     | AutoAugment | Fast AutoAugment<br/>(transfer/direct) |
-|-----------------------|------------|------------|-------------|------------------|
-| Wide-ResNet-40-2      | 26.0       | 25.2       | 20.7        | 20.6 / 20.6      |
-| Wide-ResNet-28-10     | 18.8       | 28.4       | 17.1        | 17.8 / 17.5      |
-| Shake-Shake(26 2x96d) | 17.1       | 16.0       | 14.3        | 14.9 / 14.6      |
-| PyramidNet+ShakeDrop  | 14.0       | 12.2       | 10.7        | 11.9 / 11.7      |
-
-### ImageNet
-
-Search : **450 GPU Hours (33x faster than AutoAugment)**, ResNet-50 on Reduced ImageNet
-
-| Model      | Baseline   | AutoAugment | Fast AutoAugment |
-|------------|------------|-------------|------------------|
-| ResNet-50  | 23.7 / 6.9 | 22.4 / 6.2  | **22.4 / 6.3**   |
-| ResNet-200 | 21.5 / 5.8 | 20.0 / 5.0  | **19.4 / 4.7**   |
+#Mixnet-DSQ
 
 
-## Run
 
-You can train network architectures on CIFAR-10 / 100 and ImageNet with our searched policies.
+## Introduction
 
-- fa_reduced_cifar10 : reduced CIFAR-10(4k images), WResNet-40x2
-- fa_reduced_imagenet : reduced imagenet(50k images, 120 classes), ResNet-50
+Days have passed since I last submitted my submission.With the participation of ,we have found a better solution for the challenge.
 
-```
-$ python train.py -c confs/wresnet40x2_cifar10_b512.yaml --aug fa_reduced_cifar10 --dataset cifar10
-$ python train.py -c confs/wresnet40x2_cifar10_b512.yaml --aug fa_reduced_cifar10 --dataset cifar100
-$ python train.py -c confs/wresnet28x10_cifar10_b512.yaml --aug fa_reduced_cifar10 --dataset cifar10
-$ python train.py -c confs/wresnet28x10_cifar10_b512.yaml --aug fa_reduced_cifar10 --dataset cifar100
-```
+We use the [**MixNet**](https://arxiv.org/abs/1907.09595) as the baseline model and apply the most recent quantization method on it. Finally ,our model achieves top-1 accuracy on Cifar100 with  a score of ,which is far better than my first submission.
 
-Note that we conducted experiments with ImageNet dataset using 8 machines with four V100 GPUs each.
+## Requirement
 
-```
-$ python train.py -c confs/resnet50_b4096.yaml --aug fa_reduced_imagenet --horovod
-```
-
-## Citation
-
-If you use any part of this code in your research, please cite our [paper](https://arxiv.org/abs/1905.00397).
-
-```
-@article{lim2019fast,
-  title={Fast AutoAugment},
-  author={Lim, Sungbin and Kim, Ildoo and Kim, Taesup and Kim, Chiheon and Kim, Sungwoong},
-  journal={ICML AutoML workshop},
-  year={2019}
-}
-```
-
-## Contact for Issues
-- Ildoo Kim, ildoo.kim@kakaobrain.com
-- Sungbin Lim, sungbin.lim@kakaobrain.com
++ Pytorch >1.1.0
++ Python >=3.6
++ [theconf](https://github.com/wbaek/theconf)
++ [tqdm](https://github.com/tqdm/tqdm)
++ [warmup_scheduler](https://github.com/ildoonet/pytorch-gradual-warmup-lr)
 
 
-## References & Opensources
 
-1. ResNet References
-    - (ResNet) Deep Residual Learning for Image Recognition
-      - Paper : https://arxiv.org/abs/1512.03385
-    - (ResNet) Identity Mappings in Deep Residual Networks
-      - Paper : https://arxiv.org/abs/1603.05027
-    - Codes
-      - https://github.com/osmr/imgclsmob/tree/master/pytorch/pytorchcv/models
-2. (PyramidNet) Deep Pyramidal Residual Networks
-    - Paper : https://arxiv.org/abs/1610.02915
-    - Author's Code : https://github.com/dyhan0920/PyramidNet-PyTorch
-3. (Wide-ResNet)
-    - Code : https://github.com/meliketoy/wide-resnet.pytorch
-4. (Shake-Shake)
-    - Code : https://github.com/owruby/shake-shake_pytorch
-5. ShakeDrop Regularization for Deep Residual Learning
-    - Paper : https://arxiv.org/abs/1802.02375
-    - Code : https://github.com/owruby/shake-drop_pytorch
-6. LARS : Large Batch Training of Convolutional Networks
-    - Paper : https://arxiv.org/abs/1708.03888
-    - Code : https://github.com/noahgolmant/pytorch-lars/blob/master/lars.py
-7. (ARS-Aug) Learning data augmentation policies using augmented random search
-    - Paper : https://arxiv.org/abs/1811.04768
-    - Author's Code : https://github.com/gmy2013/ARS-Aug
-8. AutoAugment
-    - Code : https://github.com/tensorflow/models/tree/master/research/autoaugment
-9. https://pytorch.org/docs/stable/torchvision/models.html
-10. https://github.com/eladhoffer/convNet.pytorch/blob/master/preprocess.py
-11. Ray
-    - https://github.com/ray-project/ray
-    - https://ray.readthedocs.io/en/latest/tune.html
-    - https://medium.com/formcept/scaling-python-modules-using-ray-framework-e5fc5430dc3e
-12. HyperOpt
-    - https://github.com/hyperopt/hyperopt
+## Install
+
+`git clone `
+
+''
+
+## Detailed descriptions
+
+In the following sections,we will explain our solution in details.
+
+### Train from scratch
+
+We train [**Mixnet**](https://arxiv.org/abs/1907.09595) from scratch on Cifar100 dataset.Our training code is referred to the implementation from [Fastautoaugment](https://github.com/kakaobrain/fast-autoaugment).However,in our training process,we do not use fast-autoaugment policy .
+
+To further reduce the model complexity,we manually optimize the network structure.More specifically,we take  the following actions:
+
++ **stride changing**
+
+  we change the stride from 4 to 2 to adapt the network to input image size 32.
+
++ **kernel removal**
+
+  
+
++ **feature dimension reduction**
+
+In addition ,we change the **depth_multiplier** to 0.83.
+
+The original Mixnet
+
+Besides,we use the following strategies to boost the performance of **Mixnet** on Cifar100 dataset.
+
++ [**Cutout**](https://arxiv.org/abs/1708.04552),[**reference implementation**](https://github.com/uoguelph-mlrg/Cutout)
+
+  **Cutout** randomly cuts a patch out of a sample image to augment the dataset.Its hyper-parameter  *n_holes*  and  *length* are set to 1 and 16 separately in our experiment.
+
++ [**Mixup**](https://arxiv.org/abs/1710.09412),[**reference implementation**](https://github.com/facebookresearch/mixup-cifar10)
+
+  **Mixup** adopts a convex combination of taining samples and their labels to improve  generalization. Its hyper-parameter *alpha* is set to 1.0 in our experiment.
+
++ [**warmup_scheduler**](https://arxiv.org/abs/1706.02677),[**reference implementation**](https://github.com/ildoonet/pytorch-gradual-warmup-lr)
+
+  **warmup_scheduler** is to alleviate rapid changes in network at early training epochs.Its hype parameter *multiplier* and *warmup epoch* is set  to 1.01 and 10 in our experiment.
+
++ **LabelSmooth**
+
+  To reguarize the training, **label smooth** is used where positive labels and negative labels are smoothed to  0.9 and 0.005 respectively.You can find the settings in *train.py* line 32~35.
+
+Our  training settings are listed in the table below
+
+| lr   | batchsize | 0ptimizer                                 | warm_up                     | lr_schedule | epoch |
+| ---- | --------- | ----------------------------------------- | --------------------------- | ----------- | ----- |
+| 0.1  | 768       | SGD with netsetrov<br>weight decay:0.0001 | Multiplier:1.01<br>epoch:10 | cosine<br>  | 500   |
+
+You can find these settings in *mixnet_m.yaml*
+
+With the above settings,our mixnet model achieves  **80.7%**  top-1 accuracy.
+
+
+
+To reproduce the reported accuracy follow the steps below:
+
+1. `cd FastAutoAugment`
+
+2. In *run_train.sh*, specify *project_dir* , *dataset_dir* , *save* and *tag*
+
+   *save* is the save model name
+
+   *tag* is the name for the experiment
+
+3. `./run_train.sh`
+
+
+
+To evaluate the trained model
+
+1. In *run_test.sh*, specify *project_dir* ,*dataset_dir*  *save* 
+
+   *save* is the saved mdoel name above
+
+2. `./run_test.sh`
+
+The already trained model is available in [mixnet_google_drive](https://drive.google.com/open?id=1FvayLyx_KVDQeYV56lHMRE36lFCeFjba)
+
+---
+
+
+
+### DSQ
+
+We quantize trained Mixnet to lower bits using [DSQ](https://arxiv.org/abs/1908.05033). You can find the implemntation details in *quantize_methods.py* and *quantize_methods.py* .According to the paper,we use the *soft quant* to quant and de-quant the tensors.The quant and de-quant operations are in *quantize_methods.py* line 54~109.
+
+The convolution weight and input activations are quantized into 8bits and 8bits respectively.To guarantee the accuracy of quantized model,we exclude the first and last layers  in quantization.You can find these in *mixnet_dsq.py*.
+
+Our quantization settings are listed in the table below
+
+| weight bits | activation bits | weight alpha | activation alpha | per-channel      | Quant   activation | memo                           |
+| ----------- | --------------- | ------------ | ---------------- | ---------------- | ------------------ | ------------------------------ |
+| w_qbit=8    | act_qbit=8      | w_alpha=0.5  | act_alpha=0.5    | per_channel=True | act_quant=True     | Per_channel is for weight only |
+
+You can find these variables in *DSQ_params* in *quantize_modules.py*
+
+Our quantization fintuning settings are listed in the table below
+
+| lr     | batchsize | optimizer                                  | warm_up                      | lr_schedule | epoch |
+| ------ | --------- | ------------------------------------------ | ---------------------------- | ----------- | ----- |
+| 0.0001 | 128       | SGD with netsetrov<br/>weight decay:0.0001 | Multiplier:1.01<br/>epoch:10 | Cosine      | 500   |
+
+You can find these settings in *mixnet_m_quant.yml*
+
+With the above settings,our quantized model still achieves top-1 accuracy on Cifar100 dataset.
+
+
+
+To reproduce the reported accuracy follow the steps below:
+
+1. `cd FastAutoAugment`
+
+2. In *run_quant_train.sh*, specify *project_dir* , *dataset_dir* , *pretrained* ,*save*and *tag*
+
+   *pretrained* is the trained full-precision model name 
+
+   *tag* is the name for the experiment
+
+   *save* is the quantized model name to be saved
+
+3. `./run_quant_train.sh`
+
+
+
+To evaluate the quantized model
+
+1. In *run_quant_test.sh*, specify *project_dir* ,*dataset_dir*  *save* 
+
+   *save* is the saved quantized mdoel name 
+
+2. `./run_quant_test.sh`
+
+The already trained model is available in [quantized_mixnet_google_drive]()
+
+
+
+
+
+## Scoring
+
+
+
+## Other
+
+Our code is under MIT license.You can distribute our code .
+
+Our team info  is as the following
+
+Team name: **Sloth** 
+
+Team members: 
+
+**Xin Liu**  E-mail:750740751@qq.com
+
+**Yao Zhang** E-mail:
+
+The challenge can post our results under **Sloth ** on official website.
+
+
+
