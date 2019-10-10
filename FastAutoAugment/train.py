@@ -262,6 +262,7 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
 
 
     if only_eval:
+        print('Eval model')
         logger.info('evaluation only+')
         model.eval()
         rs = dict()
@@ -336,16 +337,14 @@ if __name__ == '__main__':
     parser.add_argument('--dataroot', type=str, default='/data/private/pretrainedmodels', help='torchvision data folder')
     parser.add_argument('--save', type=str, default='')
     parser.add_argument('--pretrained', type=str, default='')#loading pretrained model path
-    parser.add_argument('--cv-ratio', type=float, default=0.0)
+    parser.add_argument('--cv_ratio', type=float, default=0.0)
     parser.add_argument('--cv', type=int, default=0)
     parser.add_argument('--decay', type=float, default=-1)
     parser.add_argument('--horovod', action='store_true')
-    parser.add_argument('--only-eval', action='store_true')
+    parser.add_argument('--only_eval', action='store_true')
     args = parser.parse_args()
 
     assert not (args.horovod and args.only_eval), 'can not use horovod when evaluation mode is enabled.'
-    assert (args.only_eval and not args.save) or not args.only_eval, 'checkpoint path not provided in evaluation mode.'
-
     if args.decay > 0:
         logger.info('decay reset=%.8f' % args.decay)
         C.get()['optimizer']['decay'] = args.decay
@@ -360,8 +359,11 @@ if __name__ == '__main__':
 
     import time
     t = time.time()
-    result = train_and_eval(args.tag, args.dataroot, test_ratio=args.cv_ratio, cv_fold=args.cv, \
-            save_path=args.save,pretrained=args.pretrained, horovod=args.horovod)
+    result = train_and_eval(args.tag, args.dataroot, \
+            test_ratio=args.cv_ratio, cv_fold=args.cv, \
+            save_path=args.save, pretrained=args.pretrained,\
+            only_eval=args.only_eval, horovod=args.horovod)
+
     elapsed = time.time() - t
 
     logger.info('training done.')
