@@ -7,7 +7,8 @@ import torch.nn.functional as F
 
 '''
 @Brief:params in the dict provide intinial values
-per_channel is for weight only
+       per_channel is for weight only
+       activation values are quantized per-layer by default
 '''
 DSQ_QPARAMS={'w_alpha':0.5,\
         'act_alpha':0.5,\
@@ -34,8 +35,7 @@ def get_max_min(input,per_channel):
 
 
 '''
-@rewrite basic nn.modules for quantization use in networks
-@Brief:basic modules
+@Brief: Basic nn modules for constructing networks
 '''
 class QConv2d(nn.Conv2d):
     def __init__(self, n_channels, out_channels, kernel_size, stride=1,

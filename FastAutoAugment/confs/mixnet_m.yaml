@@ -1,5 +1,5 @@
 model:
-  type: mixnet_m_quant
+  type: mixnet_m
 dataset: cifar100
 cutout: 16
 batch: 768
