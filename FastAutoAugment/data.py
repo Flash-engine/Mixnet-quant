@@ -37,8 +37,10 @@ def get_dataloaders(dataset, batch, dataroot, split=0.0, split_idx=0):
         transform_train.transforms.append(CutoutDefault(C.get()['cutout']))
 
     if dataset == 'cifar100':
-        total_trainset = torchvision.datasets.CIFAR100(root=dataroot, train=True, download=True, transform=transform_train)
-        testset = torchvision.datasets.CIFAR100(root=dataroot, train=False, download=True, transform=transform_test)
+        total_trainset = torchvision.datasets.CIFAR100(root=dataroot, \
+                train=True, download=True, transform=transform_train)
+        testset = torchvision.datasets.CIFAR100(root=dataroot, \
+                train=False, download=True, transform=transform_test)
     else:
         raise ValueError('invalid dataset name=%s' % dataset)
 
@@ -55,16 +57,19 @@ def get_dataloaders(dataset, batch, dataroot, split=0.0, split_idx=0):
         train_sampler = StratifiedSampler(total_trainset.train_labels)
 
     trainloader = torch.utils.data.DataLoader(
-        total_trainset, batch_size=batch, shuffle=True if train_sampler is None else False, num_workers=32, pin_memory=True,
-        sampler=train_sampler, drop_last=True)
+        total_trainset, batch_size=batch, \
+                shuffle=True if train_sampler is None else False, num_workers=4, \
+                pin_memory=True,sampler=train_sampler, drop_last=True)
+
     validloader = torch.utils.data.DataLoader(
-        total_trainset, batch_size=batch, shuffle=False, num_workers=16, pin_memory=True,
+        total_trainset, batch_size=batch, shuffle=False, num_workers=4, pin_memory=True,
         sampler=valid_sampler, drop_last=False)
 
     testloader = torch.utils.data.DataLoader(
-        testset, batch_size=batch, shuffle=False, num_workers=32, pin_memory=True,
+        testset, batch_size=batch, shuffle=False, num_workers=4, pin_memory=True,
         drop_last=False
     )
+
     return train_sampler, trainloader, validloader, testloader
 
 

@@ -45,7 +45,7 @@ class QuantizeFunc(Function):
 
 
 '''
-@Brief:implement DSQ quant fucntion
+@Brief:Quant fucntions for DSQ
 '''
 K_MAX=1e10
 class DSQ_QuantFunc(Function):
@@ -72,7 +72,7 @@ class DSQ_QuantFunc(Function):
 
         z = output - m
 
-        sq = torch.tanh(z*k)
+        sq = torch.tanh(z*k)#NOTE:soft-quant
 
         # Q(x) with repect to x if x lie in (l,u)
         x_derivate = step * 0.5 * scale * k * (1 - sq * sq)
@@ -103,7 +103,7 @@ class DSQ_QuantFunc(Function):
         alpha_derivate = step*0.5*fi_alpha_derivate
         
         sq=torch.sign(sq)
-        output = idx + 0.5 * (sq + 1)#de-quant
+        output = idx + 0.5 * (sq + 1)#NOTE:de-quant
         output = l + step * output
         output = torch.max(output, l)
         output = torch.min(output, u)
