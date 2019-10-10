@@ -11,9 +11,9 @@ per_channel is for weight only
 '''
 DSQ_QPARAMS={'w_alpha':0.5,\
         'act_alpha':0.5,\
-        'act_quant':False,\
+        'act_quant':True,\
         'per_channel':True,\
-        'w_qbit':4,\
+        'w_qbit':8,\
         'act_qbit':8}
 
 def get_max_min(input,per_channel):
