@@ -1,7 +1,5 @@
 # coding=utf-8
-"""
-native quantization methods
-"""
+
 import torch
 import math
 import numpy as np
@@ -105,7 +103,7 @@ class DSQ_QuantFunc(Function):
         alpha_derivate = step*0.5*fi_alpha_derivate
         
         sq=torch.sign(sq)
-        output = idx + 0.5 * (sq + 1)
+        output = idx + 0.5 * (sq + 1)#de-quant
         output = l + step * output
         output = torch.max(output, l)
         output = torch.min(output, u)
@@ -143,6 +141,6 @@ class DSQ_QuantFunc(Function):
           return grad_input,None,grad_data_max,grad_data_min,grad_alpha
 
 
-dorefa_quant=QuantizeFunc.apply
+dorefa_quant = QuantizeFunc.apply
 
-dsq_quant=DSQ_QuantFunc.apply
+dsq_quant = DSQ_QuantFunc.apply
