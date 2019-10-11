@@ -1,4 +1,4 @@
-#Mixnet-DSQ
+# Mixnet-DSQ
 
 ## Introduction
 
