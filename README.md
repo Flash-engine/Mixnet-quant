@@ -7,9 +7,9 @@ Days have passed since I last submitted my submission.With the participation of 
 We use the [**MixNet**](https://arxiv.org/abs/1907.09595) as the baseline model and compete in the Cifar100 track. Our solution can be broken down into two parts.
 
 1. **Train from scratch**
-2. **Different soft quantization**
+2. **Differential soft quantization**
 
-with the two parts ,our model achieves top-1 accuracy on Cifar100 with  a score of ,which is far better than [my first submission](https://github.com/Flash-engine/MicroNetChallenge).
+with the two parts ,our  final  model achieves up to **** top-1 accuracy on Cifar100 with  a score of **0.060357** ,which is far better than [my first submission](https://github.com/Flash-engine/MicroNetChallenge).
 
 ## Requirement
 
@@ -19,8 +19,6 @@ with the two parts ,our model achieves top-1 accuracy on Cifar100 with  a score 
 + [tqdm](https://github.com/tqdm/tqdm)
 + [warmup_scheduler](https://github.com/ildoonet/pytorch-gradual-warmup-lr)
 
-
-
 ## Install
 
 `git clone https://github.com/Flash-engine/Mixnet-quant.git `
@@ -29,31 +27,37 @@ with the two parts ,our model achieves top-1 accuracy on Cifar100 with  a score 
 
 `git checkout for_challenge`
 
+`git submodule update --remote`
+
 ## Detailed descriptions
 
 In the following sections,we will explain our solution in details.
 
 ### Train from scratch
 
-We train [**Mixnet**](https://arxiv.org/abs/1907.09595) from scratch on Cifar100 dataset.Our training code is referred to the implementation from [Fastautoaugment](https://github.com/kakaobrain/fast-autoaugment).However,in our training process,we do not use fast-autoaugment policy .
+We train [**Mixnet**](https://arxiv.org/abs/1907.09595) from scratch on Cifar100 dataset.Our training code is referred to the implementation from [Fastautoaugment](https://github.com/kakaobrain/fast-autoaugment).We use the **mixnet-m** architecture for the following training and quantization.
 
-To further reduce the model complexity,we manually optimize the network structure.More specifically,we take  the following actions:
+The **mixnet-m** architecture is shown below
+
+![mixnet-m configuration](https://tva1.sinaimg.cn/large/006y8mN6ly1g7u6b5065wj31uv0pb7ba.jpg)
+
+Each row in the above configuration list represents a mixnet block configuration.To further reduce the model complexity,we manually optimize the network structure.More specifically,we take  the following actions:
 
 + **stride changing**
 
-  we change the stride from 4 to 2 to adapt the network to input image size 32.
+  we change the stride from 2 to 1 in mixnet block 2 and 4.
 
-+ **kernel removal**
++ **Kernel removal**
 
-  
+  we remove 9x9 kernels in the last three blocks.
 
 + **feature dimension reduction**
 
-In addition ,we change the **depth_multiplier** to 0.83.
+  we manually reduce the last feature dimension from 1536 to 512.
 
-The original Mixnet
+In addition ,we change the **depth_multiplier** to *0.83*.
 
-Besides,we use the following strategies to boost the performance of **Mixnet** on Cifar100 dataset.
+Due to the manual network structure optimization and to compensate for the accuracy loss,we use the following strategies to boost the performance of **Mixnet-m** on Cifar100 dataset.
 
 + [**Cutout**](https://arxiv.org/abs/1708.04552),[**reference implementation**](https://github.com/uoguelph-mlrg/Cutout)
 
@@ -79,7 +83,7 @@ Our  training settings are listed in the table below
 
 You can find these settings in *mixnet_m.yaml*
 
-With the above settings,our mixnet model achieves  **80.7%**  top-1 accuracy.
+With the above settings,our mixnet model achieves around  **80.7%**  top-1 accuracy.
 
 
 
@@ -105,7 +109,7 @@ To evaluate the trained model
 
 2. `./run_test.sh`
 
-The already trained model is available in [mixnet_google_drive](https://drive.google.com/open?id=1FvayLyx_KVDQeYV56lHMRE36lFCeFjba)
+The already trained model is available in [mixnet_google_drive](https://drive.google.com/open?id=1EGYkFlhrGKvXXe25zPrl8dE1OHqlO0GD)
 
 ---
 
@@ -115,25 +119,25 @@ The already trained model is available in [mixnet_google_drive](https://drive.go
 
 We quantize trained Mixnet to lower bits using [DSQ](https://arxiv.org/abs/1908.05033). You can find the implemntation details in *quantize_methods.py* and *quantize_methods.py* .According to the paper,we use the *soft quant* to quant and de-quant the tensors.The quant and de-quant operations are in *quantize_methods.py* line 54~109.
 
-The convolution weight and input activations are quantized into 8bits and 8bits respectively.To guarantee the accuracy of quantized model,we exclude the first and last layers  in quantization.You can find these in *mixnet_dsq.py*.
+The convolution weight and input activations are quantized into **4bits and 8bits** respectively.To guarantee the accuracy of quantized model,we exclude the first and last layers (namely *stem_conv* and *linear*) in quantization.You can find these in *mixnet_dsq.py*.
 
 Our quantization settings are listed in the table below
 
 | weight bits | activation bits | weight alpha | activation alpha | per-channel      | Quant   activation | memo                           |
 | ----------- | --------------- | ------------ | ---------------- | ---------------- | ------------------ | ------------------------------ |
-| w_qbit=8    | act_qbit=8      | w_alpha=0.5  | act_alpha=0.5    | per_channel=True | act_quant=True     | Per_channel is for weight only |
+| w_qbit=4    | act_qbit=8      | w_alpha=0.5  | act_alpha=0.5    | per_channel=True | act_quant=True     | Per_channel is for weight only |
 
 You can find these variables in *DSQ_params* in *quantize_modules.py*
 
-Our quantization fintuning settings are listed in the table below
+We use *8 Tesla V100 cards* for quantization training.And our quantization fintuning settings are listed in the table below
 
-| lr     | batchsize | optimizer                                  | warm_up                      | lr_schedule | epoch |
-| ------ | --------- | ------------------------------------------ | ---------------------------- | ----------- | ----- |
-| 0.0001 | 128       | SGD with netsetrov<br/>weight decay:0.0001 | Multiplier:1.01<br/>epoch:10 | Cosine      | 500   |
+| lr    | batchsize | optimizer                                  | warm_up                      | lr_schedule | epoch |
+| ----- | --------- | ------------------------------------------ | ---------------------------- | ----------- | ----- |
+| 0.001 | 1024      | SGD with netsetrov<br/>weight decay:0.0001 | Multiplier:1.01<br/>epoch:10 | Cosine      | 50    |
 
 You can find these settings in *mixnet_m_quant.yml*
 
-With the above settings,our quantized model still achieves top-1 accuracy on Cifar100 dataset.
+With the above settings,our quantized model still achieves around **80.4%** top-1 accuracy on Cifar100 dataset.
 
 
 
@@ -161,7 +165,7 @@ To evaluate the quantized model
 
 2. `./run_quant_test.sh`
 
-The already quantized model is available in [quantized_mixnet_google_drive]()
+The already quantized model is available in [quantized_mixnet_google_drive](https://drive.google.com/open?id=19-Z4BQiDsWF90qg0FCzjlypGZGy43p15)
 
 
 
@@ -188,13 +192,7 @@ To get the score reported above ,follow the steps below
 
 
 
-
-
-
-
 ## Other
-
-Our code is under MIT license.You can distribute our code .
 
 Our team info  is as the following
 
@@ -204,9 +202,9 @@ Team members:
 
 **Xin Liu**  E-mail:750740751@qq.com
 
-**Yao Zhang** E-mail:
+**Yao Zhang** E-mail:[yaozhang.chn@gmail.com](mailto:yaozhang.chn@gmail.com)
 
-The challenge can post our results under **Sloth ** on official website.
+The challenge organiser can post our results under the name  **Sloth ** on the official website.
 
 
 
