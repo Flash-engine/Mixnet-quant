@@ -23,7 +23,7 @@ from networks import get_model, num_class
 from warmup_scheduler import GradualWarmupScheduler
 
 
-logger = get_logger('Manul Augment')
+logger = get_logger('MicroNet')
 logger.setLevel(logging.INFO)
 
 # label smooth 
@@ -167,6 +167,10 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
     else:
         raise ValueError('invalid optimizer type=%s' % C.get()['optimizer']['type'])
 
+    
+    is_master = True
+    logger.debug('is_master=%s' % is_master)
+
    #set schedulers
     lr_scheduler_type = C.get()['lr_schedule'].get('type', 'cosine')
     if lr_scheduler_type == 'cosine':
@@ -238,14 +242,10 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
         logger.info('evaluation only+')
         model.eval()
         rs = dict()
-        rs['train'] = run_epoch(model, trainloader, criterion, None, desc_default='train', \
-                epoch=0, writer=writers[0], is_train=True)
-
-        rs['valid'] = run_epoch(model, validloader, criterion, None, desc_default='valid', epoch=0, writer=writers[1])
-
+        
         rs['test'] = run_epoch(model, testloader_, criterion, None, desc_default='*test', epoch=0, writer=writers[2])
 
-        for key, setname in itertools.product(['loss', 'top1', 'top5'], ['train', 'valid', 'test']):
+        for key, setname in itertools.product(['loss', 'top1', 'top5'], ['test']):
             result['%s_%s' % (key, setname)] = rs[setname][key]
         result['epoch'] = 0
         return result
@@ -264,7 +264,7 @@ def train_and_eval(tag, dataroot, test_ratio=0.0, cv_fold=0, reporter=None, metr
         if math.isnan(rs['train']['loss']):
             raise Exception('train loss is NaN.')
 
-        if epoch % (10 if 'cifar' in C.get()['dataset'] else 30) == 0 or epoch == max_epoch:
+        if (epoch % 1) == 0 or epoch == max_epoch:
             rs['valid'] = run_epoch(model, validloader, criterion, None, desc_default='valid', \
                     epoch=epoch, writer=writers[1], verbose=is_master)
             rs['test'] = run_epoch(model, testloader_, criterion, None, desc_default='*test', \
