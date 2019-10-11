@@ -15,8 +15,8 @@ with the two parts ,our  final  model achieves up to **80.1** top-1 accuracy on 
 
 + Pytorch >1.1.0
 + Python >=3.6
-+ [theconf](https://github.com/wbaek/theconf)
-+ [tqdm](https://github.com/tqdm/tqdm)
+
+More required  third-party libraries can be found in **requirements.txt**
 
 ## Install
 
