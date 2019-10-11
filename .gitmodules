@@ -1,0 +1,4 @@
+[submodule "model-statistics"]
+	path = model-statistics
+	url = https://github.com/Flash-engine/model-statistics.git
+	branch = for_challenge
