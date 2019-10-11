@@ -14,7 +14,7 @@ DSQ_QPARAMS={'w_alpha':0.5,\
         'act_alpha':0.5,\
         'act_quant':True,\
         'per_channel':True,\
-        'w_qbit':8,\
+        'w_qbit':4,\
         'act_qbit':8}
 
 def get_max_min(input,per_channel):
