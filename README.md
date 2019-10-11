@@ -17,13 +17,12 @@ with the two parts ,our  final  model achieves up to **80.1** top-1 accuracy on 
 + Python >=3.6
 + [theconf](https://github.com/wbaek/theconf)
 + [tqdm](https://github.com/tqdm/tqdm)
-+ [warmup_scheduler](https://github.com/ildoonet/pytorch-gradual-warmup-lr)
 
 ## Install
 
 `git clone https://github.com/Flash-engine/Mixnet-quant.git `
 
-`cd Minet-quant`
+`cd Mixnet-quant`
 
 `git checkout for_challenge`
 
@@ -109,7 +108,7 @@ To evaluate the trained model
 
 2. `./run_test.sh`
 
-The already trained model is available in [mixnet_google_drive](https://drive.google.com/open?id=1EGYkFlhrGKvXXe25zPrl8dE1OHqlO0GD)
+The already trained model is available in [mixnet_google_drive](https://drive.google.com/open?id=1EGYkFlhrGKvXXe25zPrl8dE1OHqlO0GD),its md5sum is 0ce9b1f075cafcbc37788d4f39dc03b2
 
 ---
 
@@ -165,7 +164,7 @@ To evaluate the quantized model
 
 2. `./run_quant_test.sh`
 
-The already quantized model is available in [quantized_mixnet_google_drive](https://drive.google.com/open?id=1U07o8zJMUqAfrs4jviE67pLJMaJ6o8dX)
+The already quantized model is available in [quantized_mixnet_google_drive](https://drive.google.com/open?id=1U07o8zJMUqAfrs4jviE67pLJMaJ6o8dX),its md5sum is 30013597ac22f6f70ed976414c49cd74 
 
 
 
@@ -175,7 +174,7 @@ The already quantized model is available in [quantized_mixnet_google_drive](http
 
 In this section, we will descrip the calculation details of our final  model.
 
-*count_mixnet.py* is the python file to count the *params* , *flops* and output the normalized final score.It refers to the official  [implementation](https://github.com/google-research/google-research/blob/master/micronet_challenge/counting.py) and [thop](https://github.com/Lyken17/pytorch-OpCounter/tree/master/thop). We omit the BN layers and the low-high precision conversions . Therefore, what we do is just collecting all the conv layers,fc layers and other operations like activations eletmentwise-add ,element wise-mul and  pooling.
+*count_mixnet.py* is the python file to count the *params* , *flops* and output the normalized final score.It refers to the official  [implementation](https://github.com/google-research/google-research/blob/master/micronet_challenge/counting.py) and [thop](https://github.com/Lyken17/pytorch-OpCounter/tree/master/thop). *We omit the BN layers and the low-high precision conversions . Therefore, what we do is just collecting all the conv layers,fc layers and other operations like activations eletmentwise-add ,element wise-mul and  pooling*.
 
 In *count_mixnet.py*,we set the *INPUT_BITS* ,*ACCUMULATOR_BITS* and *PARAMETER_BITS* to be 8 ,32 and 4 bits respectively.
 
@@ -184,11 +183,7 @@ Our final param score is **0.008178(0.2985/36.5)** and flops score is **0.053478
 To get the score reported above ,follow the steps below
 
 1. `cd model-statistics`
-2. Modify *run_count.sh*,specify the *quantized _model* 
-
-*quantized_model* is the quantized model path
-
-3. run `python count_wide_resnet.py`
+2.  `python count_mixnet.py`
 
 
 
