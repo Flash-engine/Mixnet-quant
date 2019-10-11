@@ -9,7 +9,7 @@ We use the [**MixNet**](https://arxiv.org/abs/1907.09595) as the baseline model 
 1. **Train from scratch**
 2. **Differential soft quantization**
 
-with the two parts ,our  final  model achieves up to **80.1** top-1 accuracy on Cifar100 with  a score of **0.0617** ,which is far better than [my first submission](https://github.com/Flash-engine/MicroNetChallenge).
+with the two parts ,our  final  model achieves up to **80.1** top-1 accuracy on Cifar100 with  a score of **0.06183** ,which is far better than [my first submission](https://github.com/Flash-engine/MicroNetChallenge).
 
 ## Requirement
 
@@ -118,7 +118,7 @@ The already trained model is available in [mixnet_google_drive](https://drive.go
 
 We quantize trained Mixnet to lower bits using [DSQ](https://arxiv.org/abs/1908.05033). You can find the implemntation details in *quantize_methods.py* and *quantize_methods.py* .According to the paper,we use the *soft quant* to quant and de-quant the tensors.The quant and de-quant operations are in *quantize_methods.py* line 54~109.
 
-The convolution weight and input activations are quantized into **4bits and 8bits** respectively.To guarantee the accuracy of quantized model,we exclude the first and last layers (namely *stem_conv* and *linear*) in quantization.You can find these in *mixnet_dsq.py*.
+The convolution weight and input activations are quantized into **4bits and 8bits** respectively.To guarantee the accuracy of quantized model,we don't quantize the bias of conv and linear layers.Besides,we exclude the first conv  and last classifier layer in quantization.You can find these in *mixnet_dsq.py*.
 
 Our quantization settings are listed in the table below
 
@@ -178,7 +178,7 @@ In this section, we will descrip the calculation details of our final  model.
 
 In *count_mixnet.py*,we set the *INPUT_BITS* ,*ACCUMULATOR_BITS* and *PARAMETER_BITS* to be 8 ,32 and 4 bits respectively.
 
-Our final param score is **0.008178(0.2985/36.5)** and flops score is **0.053478(0.5610/10.49)**.So our final score is **0.0617**
+Our final param score is **0.008353(0.30487/36.5)** and flops score is **0.053478(0.5610/10.49)**.So our final score is **0.06183**.You can refer to *count_mixnet.py* for more calculation details.
 
 To get the score reported above ,follow the steps below
 
