@@ -199,7 +199,7 @@ Team members:
 
 **Yao Zhang** E-mail:[yaozhang.chn@gmail.com](mailto:yaozhang.chn@gmail.com)
 
-The challenge organiser can post our results under the name  **Sloth ** on the official website.
+The challenge organiser can post our results under the name **Sloth** on the official website.
 
 
 
