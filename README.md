@@ -1,12 +1,15 @@
 #Mixnet-DSQ
 
-
-
 ## Introduction
 
-Days have passed since I last submitted my submission.With the participation of ,we have found a better solution for the challenge.
+Days have passed since I last submitted my submission.With the participation of **Yao Zhang** ,we have found a better solution for the challenge.
 
-We use the [**MixNet**](https://arxiv.org/abs/1907.09595) as the baseline model and apply the most recent quantization method on it. Finally ,our model achieves top-1 accuracy on Cifar100 with  a score of ,which is far better than my first submission.
+We use the [**MixNet**](https://arxiv.org/abs/1907.09595) as the baseline model and compete in the Cifar100 track. Our solution can be broken down into two parts.
+
+1. **Train from scratch**
+2. **Different soft quantization**
+
+with the two parts ,our model achieves top-1 accuracy on Cifar100 with  a score of ,which is far better than [my first submission](https://github.com/Flash-engine/MicroNetChallenge).
 
 ## Requirement
 
@@ -20,9 +23,11 @@ We use the [**MixNet**](https://arxiv.org/abs/1907.09595) as the baseline model 
 
 ## Install
 
-`git clone `
+`git clone https://github.com/Flash-engine/Mixnet-quant.git `
 
-''
+`cd Minet-quant`
+
+`git checkout for_challenge`
 
 ## Detailed descriptions
 
@@ -84,9 +89,9 @@ To reproduce the reported accuracy follow the steps below:
 
 2. In *run_train.sh*, specify *project_dir* , *dataset_dir* , *save* and *tag*
 
-   *save* is the save model name
+   *save* is the  model path to be saved
 
-   *tag* is the name for the experiment
+   *tag* is the name for the training  experiment
 
 3. `./run_train.sh`
 
@@ -94,9 +99,9 @@ To reproduce the reported accuracy follow the steps below:
 
 To evaluate the trained model
 
-1. In *run_test.sh*, specify *project_dir* ,*dataset_dir*  *save* 
+1. In *run_test.sh*, specify *project_dir* ,*dataset_dir*  ,*save* 
 
-   *save* is the saved mdoel name above
+   *save* is the saved trained model path
 
 2. `./run_test.sh`
 
@@ -136,13 +141,13 @@ To reproduce the reported accuracy follow the steps below:
 
 1. `cd FastAutoAugment`
 
-2. In *run_quant_train.sh*, specify *project_dir* , *dataset_dir* , *pretrained* ,*save*and *tag*
+2. In *run_quant_train.sh*, specify *project_dir* , *dataset_dir* , *pretrained* ,*save* and *tag*
 
    *pretrained* is the trained full-precision model name 
 
    *tag* is the name for the experiment
 
-   *save* is the quantized model name to be saved
+   *save* is the quantized model path to be saved
 
 3. `./run_quant_train.sh`
 
@@ -150,19 +155,40 @@ To reproduce the reported accuracy follow the steps below:
 
 To evaluate the quantized model
 
-1. In *run_quant_test.sh*, specify *project_dir* ,*dataset_dir*  *save* 
+1. In *run_quant_test.sh*, specify *project_dir* ,*dataset_dir* and *save* 
 
-   *save* is the saved quantized mdoel name 
+   *save* is the saved quantized mdoel path
 
 2. `./run_quant_test.sh`
 
-The already trained model is available in [quantized_mixnet_google_drive]()
+The already quantized model is available in [quantized_mixnet_google_drive]()
 
 
 
 
 
 ## Scoring
+
+In this section, we will descrip the calculation details of our final  model.
+
+*count_mixnet.py* is the python file to count the *params* , *flops* and output the normalized final score.It refers to the official  [implementation](https://github.com/google-research/google-research/blob/master/micronet_challenge/counting.py) and [thop](https://github.com/Lyken17/pytorch-OpCounter/tree/master/thop). We omit the BN layers and the low-high precision conversions . Therefore, what we do is just collecting all the conv layers,fc layers and other operations like activations eletmentwise-add ,element wise-mul and  pooling.
+
+In *count_mixnet.py*,we set the *INPUT_BITS* ,*ACCUMULATOR_BITS* and *PARAMETER_BITS* to be 8 ,32 and 4 bits respectively.
+
+Our final param score is **0.0069322(0.2530/36.5)** and flops score is **0.05342(0.5604/10.49)**.So our final score is **0.060357**
+
+To get the score reported above ,follow the steps below
+
+1. `cd model-statistics`
+2. Modify *run_count.sh*,specify the *quantized _model* 
+
+*quantized_model* is the quantized model path
+
+3. run `python count_wide_resnet.py`
+
+
+
+
 
 
 
