@@ -9,7 +9,7 @@ We use the [**MixNet**](https://arxiv.org/abs/1907.09595) as the baseline model 
 1. **Train from scratch**
 2. **Differential soft quantization**
 
-with the two parts ,our  final  model achieves up to **** top-1 accuracy on Cifar100 with  a score of **0.060357** ,which is far better than [my first submission](https://github.com/Flash-engine/MicroNetChallenge).
+with the two parts ,our  final  model achieves up to **80.1** top-1 accuracy on Cifar100 with  a score of **0.0617** ,which is far better than [my first submission](https://github.com/Flash-engine/MicroNetChallenge).
 
 ## Requirement
 
@@ -137,7 +137,7 @@ We use *8 Tesla V100 cards* for quantization training.And our quantization fintu
 
 You can find these settings in *mixnet_m_quant.yml*
 
-With the above settings,our quantized model still achieves around **80.4%** top-1 accuracy on Cifar100 dataset.
+With the above settings,our quantized model still achieves around **80.1%** top-1 accuracy on Cifar100 dataset.
 
 
 
@@ -165,7 +165,7 @@ To evaluate the quantized model
 
 2. `./run_quant_test.sh`
 
-The already quantized model is available in [quantized_mixnet_google_drive](https://drive.google.com/open?id=19-Z4BQiDsWF90qg0FCzjlypGZGy43p15)
+The already quantized model is available in [quantized_mixnet_google_drive](https://drive.google.com/open?id=1U07o8zJMUqAfrs4jviE67pLJMaJ6o8dX)
 
 
 
@@ -179,7 +179,7 @@ In this section, we will descrip the calculation details of our final  model.
 
 In *count_mixnet.py*,we set the *INPUT_BITS* ,*ACCUMULATOR_BITS* and *PARAMETER_BITS* to be 8 ,32 and 4 bits respectively.
 
-Our final param score is **0.0069322(0.2530/36.5)** and flops score is **0.05342(0.5604/10.49)**.So our final score is **0.060357**
+Our final param score is **0.008178(0.2985/36.5)** and flops score is **0.053478(0.5610/10.49)**.So our final score is **0.0617**
 
 To get the score reported above ,follow the steps below
 
