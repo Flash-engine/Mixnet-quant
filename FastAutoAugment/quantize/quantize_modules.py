@@ -14,7 +14,7 @@ DSQ_QPARAMS={'w_alpha':0.5,\
         'act_alpha':0.5,\
         'act_quant':True,\
         'per_channel':True,\
-        'w_qbit':8,\
+        'w_qbit':4,\
         'act_qbit':8}
 
 def get_max_min(input,per_channel):
@@ -76,7 +76,7 @@ class QConv2d(nn.Conv2d):
         else:
             qinput=input
 
-        qbias = self.bias #NOTE:we do not consider quantizing bias
+        qbias = self.bias 
 
         return F.conv2d(qinput, qweight, qbias, self.stride,
                         self.padding, self.dilation, self.groups)
@@ -119,6 +119,6 @@ class QLinear(nn.Linear):
         else:
             qinput=input
 
-        qbias = self.bias #NOTE:we do not consider quantizing bias
+        qbias = self.bias 
 
         return F.linear( qinput, qweight, qbias )
